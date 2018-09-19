@@ -109,12 +109,12 @@ done
 
 if ${RECORD:=false}; then														# Si la opción de grabar está activada
 	if [[ $(which ttyrec) ]] && ! killall -0 ttyrec 2> /dev/null; then			# Si no está instalado ttyrec o se está ejecutando este parámetro no sirve
-		typeset R_ARCHIVO="${SCRIPT%.*}.rec"
+		typeset R_ARCHIVO="${SCRIPT%.*}.rec";
 
 		( gnome-terminal -- ttyrec "$R_ARCHIVO" -e "$0 $PARAMETROS" ) 2> /dev/null || {
 			SALIDA=$?;
 			echo -e "You need gnome-terminal for this option. You can also configure your terminal in the script.";	## String
-			exit $SALIDA
+			exit $SALIDA;
 		}
 
 		while [[ ! -f "$R_ARCHIVO" ]]; do
@@ -122,10 +122,10 @@ if ${RECORD:=false}; then														# Si la opción de grabar está activada
 			read -rep "$(echo -e "$CYAN${BOLD}Type the full path to where you want your file to be saved: $END")" -i "$HOME/$R_ARCHIVO" R_ARCHIVO;	## String
 
 			mkdir -p "${R_ARCHIVO%/*}" 2> /dev/null;							# Trata de crear los directorios de la ruta, de ser necesario.
-			: > "$R_ARCHIVO"
+			(: > "$R_ARCHIVO") > /dev/null 2>&1;
 			[[ ! -f "$R_ARCHIVO" ]] && { unset R_ARCHIVO; continue; };
 
-			gnome-terminal -- ttyrec "$R_ARCHIVO" -e "$0 $PARAMETROS" "$ARCHIVO" && break;
+			( gnome-terminal -- ttyrec "$R_ARCHIVO" -e "$0 $PARAMETROS" "$ARCHIVO" ) 2> /dev/null && break;
 		done
 
 		EJEMPLO_DE_USO "${BOLD}ttyplay ${R_ARCHIVO}$END";
@@ -136,10 +136,23 @@ if ${RECORD:=false}; then														# Si la opción de grabar está activada
 fi
 
 if ${DEBUG:=false}; then														# Si la opción -d está activada crea archivo de depuración
-	exec 5> "${SCRIPT%.*}.log"													# Se crea en esta parte para que no muestre el "precódigo"
-	BASH_XTRACEFD="5"
-	notify-send -i "emblem-ok-symbolic" -u "normal" "Depuración activada" "La depuración se guarda en el archivo '${SCRIPT%.*}.log'"
-	gnome-terminal -- watch -tn .1 "tail -n20 "${SCRIPT%.*}.log""
+	typeset D_ARCHIVO="${SCRIPT%.*}.log";
+
+	(: > "$D_ARCHIVO") > /dev/null 2>&1 || {
+		while :; do
+			echo -e "${RED}Debug file could not be generated.$END";				## String
+			read -rep "$(echo -e "$CYAN${BOLD}Type the full path to where you want your file to be saved: $END")" -i "$HOME/$D_ARCHIVO" D_ARCHIVO;	## String
+
+			mkdir -p "${D_ARCHIVO%/*}" 2> /dev/null;							# Trata de crear los directorios de la ruta, de ser necesario.
+			(: > "$D_ARCHIVO") > /dev/null 2>&1 || unset D_ARCHIVO;
+			[[ -f "$D_ARCHIVO" ]] && break;
+		done
+	}
+
+	exec 5> "$D_ARCHIVO";														# Se crea en esta parte para que no muestre el "precódigo"
+	BASH_XTRACEFD="5";
+	notify-send -i "emblem-ok-symbolic" -u "normal" "Debugging enabled" "The logs of «$SCRIPT» will be stored in «$D_ARCHIVO»";	## String
+	( gnome-terminal -- watch -tn .1 "tail -n20 "$D_ARCHIVO"" ) 2> /dev/null
 	set -x
 fi
 
