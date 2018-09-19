@@ -1,16 +1,15 @@
 #!/usr/bin/env bash
-typeset -r RED=$'\e[31m'; B_RED=$'\e[41m'; CYAN=$'\e[36m'; B_CYAN=$'\e[46m' \
-	BLUE=$'\e[34m';	 B_BLUE=$'\e[44m'; GREEN=$'\e[32m'; B_GREEN=$'\e[42m' \
-	BLACK=$'\e[30m'; B_BLACK=$'\e[40m'; WHITE=$'\e[37m'; B_WHITE=$'\e[47m' \
-	PURPLE=$'\e[35m'; B_PURPLE=$'\e[45m'; YELLOW=$'\e[33m'; B_YELLOW=$'\e[43m' \
-	BOLD=$'\e[1m'; HIDE=$'\e[8m'; STROKE=$'\e[9m' \
-	INVERT=$'\e[7m'; ITALIC=$'\e[3m'; UNDERLINE=$'\e[4m' \
-	END=$'\e[0m'; SCRIPT="${0##*/}";
+typeset -r RED=$'\e[31m' CYAN=$'\e[36m' GREEN=$'\e[32m' BOLD=$'\e[1m' \
+	INVERT=$'\e[7m' ITALIC=$'\e[3m' UNDERLINE=$'\e[4m' \
+	END=$'\e[0m' SCRIPT="${0##*/}";
+typeset -i M_COLS COLUMNAS M_FILAS FILAS REDO_PICKER;
+typeset OPCION PICKER ARCHIVO;
 
 IMPREVISTO(){
 	echo -e "\r${SCRIPT}: has stopped.                      "
 	exit 1
 }
+
 SOBRE_EL_USO(){
 	echo -e "${BOLD}SINOPSIS$END"
 	echo -e "\t$SCRIPT [Opciones]"
@@ -36,6 +35,14 @@ SOBRE_EL_USO(){
 
 CLEAR() {
 	clear && printf "\ec\e[3J";
+}
+
+EJEMPLO_DE_USO(){
+	if [[ ${USER-$(whoami)} = "root" ]]; then
+		typeset -l SIGNO="#" RUTA=${PWD//\/root/\~} COLOR=$RED
+	fi
+
+	echo -e "$BOLD${COLOR:-$GREEN}$USER@$HOSTNAME$END:$BOLD$BLUE${RUTA:-${PWD//\/home\/$USER/\~}}$END${SIGNO:-"$"}\x20$1\r"
 }
 
 GRAFICAR() {
@@ -73,43 +80,62 @@ SAVE_FILE() {
 	fi
 }
 
-
 # Precodigo --------------------------------------------------------------------
 trap IMPREVISTO INT SIGINT SIGTERM ABRT HUP TERM QUIT							# Regreso cuando se cancela con «CTRL + C»
-PARAMETROS="$*"																	# Variable con los parámetros establecidos en la consola
+typeset PARAMETROS="$*"															# Variable con los parámetros establecidos en la consola
+
 while getopts "dhr" OPCION; do
 	case $OPCION in
 		d)	DEBUG=true
 			;;
 		h)
-			printf '\e[8;19;159t'; CLEAR
-			SOBRE_EL_USO
+			printf '\e[8;19;159t';
+			CLEAR;
+			SOBRE_EL_USO;
 			exit 0
 			;;
 		r)	RECORD=true
 			;;
 		\?)
-			echo -e "Pruebe '$BOLD$0 -h$END' para más información." 2> /dev/null
+			echo -e "Try '$BOLD$0 -h$END' for more information." 2> /dev/null;	## String
 			exit 1
 			;;
 		:)
-			echo -e "Pruebe '$BOLD$0 -h$END' para más información." 2> /dev/null
+			echo -e "Try '$BOLD$0 -h$END' for more information." 2> /dev/null;	## String
 			exit 1
 			;;
 	esac
 done
 
-shift $((OPTIND-1))
-
-if [[ ${RECORD:=false} = true ]]; then											# Si la opción de grabar está activada
+if ${RECORD:=false}; then														# Si la opción de grabar está activada
 	if [[ $(which ttyrec) ]] && ! killall -0 ttyrec 2> /dev/null; then			# Si no está instalado ttyrec o se está ejecutando este parámetro no sirve
-		gnome-terminal -- ttyrec ${SCRIPT%.*}.rec -e "$0 $PARAMETROS"
-		EJEMPLO_DE_USO "${BOLD}ttyplay ${SCRIPT%.*}.rec$END"
-		exit 0
+		typeset R_ARCHIVO="${SCRIPT%.*}.rec"
+
+		( gnome-terminal -- ttyrec "$R_ARCHIVO" -e "$0 $PARAMETROS" ) 2> /dev/null || {
+			SALIDA=$?;
+			echo -e "You need gnome-terminal for this option. You can also configure your terminal in the script.";	## String
+			exit $SALIDA
+		}
+
+		while [[ ! -f "$R_ARCHIVO" ]]; do
+			echo -e "${RED}Record file could not be generated.$END";			## String
+			read -rep "$(echo -e "$CYAN${BOLD}Type the full path to where you want your file to be saved: $END")" -i "$HOME/$R_ARCHIVO" R_ARCHIVO;	## String
+
+			mkdir -p "${R_ARCHIVO%/*}" 2> /dev/null;							# Trata de crear los directorios de la ruta, de ser necesario.
+			: > "$R_ARCHIVO"
+			[[ ! -f "$R_ARCHIVO" ]] && { unset R_ARCHIVO; continue; };
+
+			gnome-terminal -- ttyrec "$R_ARCHIVO" -e "$0 $PARAMETROS" "$ARCHIVO" && break;
+		done
+
+		EJEMPLO_DE_USO "${BOLD}ttyplay ${R_ARCHIVO}$END";
+		exit 0;
+	else
+		which ttyrec 1> /dev/null || notify-send "Dependencia incumplica" "La opción -r requiere de «ttyrec»";	## String
 	fi
 fi
 
-if [[ ${DEBUG:=false} = true ]]; then											# Si la opción -d está activada crea archivo de depuración
+if ${DEBUG:=false}; then														# Si la opción -d está activada crea archivo de depuración
 	exec 5> "${SCRIPT%.*}.log"													# Se crea en esta parte para que no muestre el "precódigo"
 	BASH_XTRACEFD="5"
 	notify-send -i "emblem-ok-symbolic" -u "normal" "Depuración activada" "La depuración se guarda en el archivo '${SCRIPT%.*}.log'"
@@ -117,7 +143,7 @@ if [[ ${DEBUG:=false} = true ]]; then											# Si la opción -d está activad
 	set -x
 fi
 
-typeset -i M_COLS COLUMNAS M_FILAS FILAS;
+
 
 while :; do
 	M_COLS=$(tput cols);
@@ -156,11 +182,6 @@ for (( N_FILA = 1; N_FILA <= FILAS; N_FILA++ )); do
 done
 
 GRAFICAR;
-
-typeset OPCION; # Opción del menú seleccionada.
-typeset -i REDO_PICKER;
-typeset PICKER; # No se le asigna como entero ya que puede tomar el valor de «Q»
-typeset ARCHIVO
 
 while :; do
 	echo -e "\nType according to option:\n";
@@ -238,7 +259,7 @@ while :; do
 				echo -e "${RED}\nFile could not be generated.$END";				## String
 				read -rep "$(echo -e "$CYAN${BOLD}Type the full path to where you want your file to be saved: $END")" -i "$HOME/${ARCHIVO##*/}" ARCHIVO;	## String
 
-				mkdir -p "${ARCHIVO%/*}";
+				mkdir -p "${ARCHIVO%/*}" 2> /dev/null || continue;
 				SAVE_FILE "$ARCHIVO" && break;
 			done
 		}
