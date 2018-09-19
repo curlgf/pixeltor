@@ -1,16 +1,16 @@
-#!/bin/bash
-readonly RED=$'\e[31m';		readonly B_RED=$'\e[41m';	readonly BOLD=$'\e[1m'
-readonly CYAN=$'\e[36m';	readonly B_CYAN=$'\e[46m';	readonly HIDE=$'\e[8m'
-readonly BLUE=$'\e[34m';	readonly B_BLUE=$'\e[44m';	readonly STROKE=$'\e[9m'
-readonly GREEN=$'\e[32m';	readonly B_GREEN=$'\e[42m';	readonly INVERT=$'\e[7m'
-readonly BLACK=$'\e[30m';	readonly B_BLACK=$'\e[40m';	readonly ITALIC=$'\e[3m'
-readonly WHITE=$'\e[37m';	readonly B_WHITE=$'\e[47m';	readonly UNDERLINE=$'\e[4m'
-readonly PURPLE=$'\e[35m';	readonly B_PURPLE=$'\e[45m'
-readonly YELLOW=$'\e[33m';	readonly B_YELLOW=$'\e[43m'
-readonly END=$'\e[0m';		readonly SCRIPT="${0##*/}"
+#!/usr/bin/env bash
+declare -r RED=$'\e[31m'; B_RED=$'\e[41m'; CYAN=$'\e[36m'; B_CYAN=$'\e[46m' \
+	BLUE=$'\e[34m';	 B_BLUE=$'\e[44m'; GREEN=$'\e[32m'; B_GREEN=$'\e[42m' \
+	BLACK=$'\e[30m'; B_BLACK=$'\e[40m'; WHITE=$'\e[37m'; B_WHITE=$'\e[47m' \
+	PURPLE=$'\e[35m'; B_PURPLE=$'\e[45m'; YELLOW=$'\e[33m'; B_YELLOW=$'\e[43m' \
+	BOLD=$'\e[1m'; HIDE=$'\e[8m'; STROKE=$'\e[9m' \
+	INVERT=$'\e[7m'; ITALIC=$'\e[3m'; UNDERLINE=$'\e[4m' \
+	END=$'\e[0m'; SCRIPT="${0##*/}";
+
+alias clear='clear && printf "\ec\e[3J"'
 
 IMPREVISTO(){
-	echo -e "\r$0: se ha detenido de manera imprevista."
+	echo -e "\r${SCRIPT}: has stopped.                      "
 	exit 1
 }
 SOBRE_EL_USO(){
@@ -35,16 +35,8 @@ SOBRE_EL_USO(){
 
 	echo -e "${BOLD}AUTOR$END"
 }
-EJEMPLO_DE_USO(){
-	if [[ ${USER-$(whoami)} = "root" ]]; then
-		local SIGNO="#"
-		local RUTA=${PWD//\/root/\~}
-		local COLOR=$RED
-	fi
-	echo -ne "$BOLD${COLOR:-$GREEN}$USER@$HOSTNAME$END:$BOLD$BLUE${RUTA:-${PWD//\/home\/$USER/\~}}$END${SIGNO:-"$"}\x20$1\r"
-}
 GRAFICAR() {
-	echo -ne "    "																# Pequeña separación del lado izquierdo antes de los numeros de las columnas
+	printf "    " # Separación del lado izq. antes de los no. de las columnas.
 	# N representa el no. de las columnas
 	for (( N = 1; N <= COLUMNAS; N++ )); do
 		printf "$BOLD$CYAN%-3s$END" "$N"
@@ -53,7 +45,7 @@ GRAFICAR() {
 	for (( N = 1; N <= FILAS; N++ )); do
 		printf "$BOLD$CYAN\n%3s$END" "$N"
 		for (( COLUMNA = 0; COLUMNA < COLUMNAS; COLUMNA++ )); do
-			printf " %b" "$(eval "echo -n \${ARRAY_$N[$COLUMNA]}")"
+			printf " %b" "$(eval "printf \${ARRAY_$N[$COLUMNA]}")"
 		done
 	done
 
@@ -101,27 +93,37 @@ if [[ ${DEBUG:=false} = true ]]; then											# Si la opción -d está activad
 	gnome-terminal -- watch -tn .1 "tail -n20 "${SCRIPT%.*}.log""
 	set -x
 fi
-# Código -----------------------------------------------------------------------
-while :; do
-	read -rep "$(echo -e "$CYAN${BOLD}Numero de columnas (VERTICAL):$END ")" COLUMNAS
 
-	if [[ $COLUMNAS =~ ^[0-9]+$ && $COLUMNAS -gt 0 && $COLUMNAS -le 100 ]]; then
-		break
+typeset -i M_COLS COLUMNAS M_FILAS FILAS;
+
+while :; do
+	M_COLS=$(tput cols);
+	[[ $M_COLS = 0 ]] && M_COLS=50 || M_COLS=$(((M_COLS -4)/3));
+
+	read -rep "$(echo -e "$CYAN${BOLD}Numero de columnas (VERTICAL):$END ")" -i $M_COLS COLUMNAS;
+
+	if [[ $COLUMNAS =~ ^[0-9]+$ && $COLUMNAS -gt 0 && $COLUMNAS -le $M_COLS ]]; then
+		break;
 	fi
 
-	echo -e "${RED}Error: Sólo se aceptan NÚMEROS mayores a 0 y menores a 101.$END"; unset COLUMNAS
+	echo -e "${RED}Only NUMBERS greater than 0 and less than $M_COLS are accepted.$END";
+	unset COLUMNAS;
 done
 
 while :; do
-	read -rep "$(echo -e "$CYAN${BOLD}Numero de filas (HORIZONTAL):$END ")" FILAS
+	M_FILAS=$(tput lines);
+	[[ $M_FILAS = 0 ]] && unset M_FILAS || M_FILAS=$((M_FILAS -12));
 
-	if [[ $FILAS =~ ^[0-9]+$ && $FILAS -gt 0 && $FILAS -le 100 ]]; then
-		break
+	read -rep "$(echo -e "$CYAN${BOLD}Numero de filas (HORIZONTAL):$END ")" -i ${M_FILAS:-""} FILAS;
+
+	if [[ $FILAS =~ ^[0-9]+$ && $FILAS -gt 0 ]]; then
+		break;
 	fi
 
-	echo -e "${RED}Error: Sólo se aceptan NÚMEROS mayores a 0 y menores a 101.$END"; unset FILAS
-done; echo
-# Crea n array dados por la variable FILAS. A cada array se le asigna 01..N elementos dados por COLUMNAS
+	echo -e "${RED}Only NUMBERS greater than 0 are accepted.$END";
+	unset FILAS;
+done
+# Crea N arrays dados por la variable FILAS. A cada array se le asigna 01..N elementos dados por COLUMNAS
 for (( N_FILA = 1; N_FILA <= FILAS; N_FILA++ )); do
 	eval "declare -a ARRAY_${N_FILA}=($(printf "%s" "$(eval "echo {01..$COLUMNAS}")"))"
 
