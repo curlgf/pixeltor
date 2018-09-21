@@ -197,11 +197,14 @@ if ${DEBUG:=false}; then														# Si la opción -d está activada crea arc
 	set -x
 fi
 # Cdóigo -----------------------------------------------------------------------
+which tput > /dev/null 2>&1 && M_COLS=$((($(tput cols)-4)/3));
+
 while :; do
-	M_COLS=$(tput cols 2> /dev/null);
-	[[ $M_COLS = 0 ]] && M_COLS=50 || M_COLS=$(((M_COLS -4)/3));
+	[[ -z $M_COLS ]] && { M_COLS=32; printf '\e[8;50;100t\r'; }
 
 	read -rep "$(echo -e "$CYAN${BOLD}Numero de columnas (VERTICAL):$END ")" -i $M_COLS COLUMNAS;
+
+	which tput > /dev/null 2>&1 && M_COLS=$((($(tput cols)-4)/3));
 
 	if [[ $COLUMNAS =~ ^[0-9]+$ && $COLUMNAS -gt 0 && $COLUMNAS -le $M_COLS ]]; then
 		break;
@@ -212,8 +215,7 @@ while :; do
 done
 
 while :; do
-	M_FILAS=$(tput lines 2> /dev/null);
-	[[ $M_FILAS = 0 ]] && unset M_FILAS || M_FILAS=$((M_FILAS -14));
+	which tput > /dev/null 2>&1 && M_FILAS=$(($(tput lines) -14))
 
 	read -rep "$(echo -e "$CYAN${BOLD}Numero de filas (HORIZONTAL):$END ")" -i ${M_FILAS:-""} FILAS;
 
