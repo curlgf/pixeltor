@@ -10,27 +10,69 @@ IMPREVISTO(){
 	exit 1
 }
 
+L_MIN() {
+	# Retorna la longitud máxima que que puede tener un string «$2» sin romper palabras con respecto a una longitud dada «$1»
+	typeset -l LT=$1 I=1;	# Longitud temporal. Es la longitud máxima que puede tener
+
+	while [[ ${2:$((LT-I)):1} != " " ]]; do
+		((I++));
+		if [[ $I -eq ${#2} ]]; then # Cuando se recorre toda la palabra y no hay espacios está se rompe
+			I=1;
+			break;
+		fi
+	done
+
+	return $(($1-I));
+}
+
+WRAP_TEXT() { # String, prefix, lenprefix
+	typeset -l CADENA="$1" LONGITUD DELIMITADOR;
+
+	LONGITUD=$(($(tput cols)-${3:-${#2}})) > /dev/null 2>&1 || { printf '\e[8;19;100t'; LONGITUD=$((100-${3:-${#2}})); };
+	DELIMITADOR="$2";
+
+	while [[ ${#CADENA} -ge ${LONGITUD} ]]; do
+		# Mientras el primer carácter de CADENA sea un espacio se irá recorriendo hasta que no lo sea
+		while [[ ${CADENA:0:1} = " " ]]; do
+			CADENA="${CADENA:1}";
+		done
+
+		L_MIN $LONGITUD "$CADENA"; LMIN=$?;
+
+		echo "${DELIMITADOR%%:*}${CADENA:0:$LMIN}";
+
+		CADENA="${CADENA:$LMIN}";
+		DELIMITADOR="${DELIMITADOR#*:}";
+	done
+
+	if [[ ${#CADENA} -gt 0 ]]; then
+		while [[ ${CADENA:0:1} = " " ]]; do
+			CADENA="${CADENA:1}";
+		done
+
+		echo "${DELIMITADOR%%:*}${CADENA:0:$LMIN}";
+	fi
+}
+
 SOBRE_EL_USO(){
-	echo -e "${BOLD}SINOPSIS$END"
-	echo -e "\t$SCRIPT [Opciones]"
+	echo -e "${BOLD}SYNOPSIS$END";
+	echo -e "\t$SCRIPT [Options]";
 	echo
 
-	echo -e "${BOLD}DESCRIPCIÓN$END"
-	echo -e "\t$BOLD$SCRIPT$END Es un pequeño script para aquellos fanáticos del pixelart en terminales. Sin ninguna dependencia más allá del interprete BASH (esto"
-	echo -e "\tsuponiendo que no use ninguna opción). Escrito para ser usado en una terminal moderna con entrono Gnome, sin embargo el uso en consola u otra terminal"
-	echo -e "\tes posible, lo mismo para otro entrono. Quizá deba echar un ojo al código de querer modificar."
-	echo
-	echo -e "\tEn la ejecución sólo puede crear una cuadricula en los limites de: 1×1 a 100×100, pudiendo ser 1 o 100."
-	echo -e "\tAl escoger un color usted cuenta con 256 (0-255) disponibles, pero solamente en terminales \"modernas\" podrá ver todos. Se recomienda sólo usar los"
-	echo -e "\tprimeros 16 (0-15) si quiere mayor compatibilidad en todas las terminales."
+	echo -e "${BOLD}DESCRIPTION$END";
+	WRAP_TEXT "$BOLD$SCRIPT$END It's a simple script for those pixelart fanatics in terminals. It has no dependencies at all beyond the simple interpreter bash. Execute and let your artistic talents fly!" $'\t' 8;
+	# "Es un simple script para aquellos fanáticos del pixelart en terminales. No tiene dependencias en lo absoluto más allá del simple interprete bash. Ejecute y ¡deje volar sus dotes artísticos."
 	echo
 
-	echo -e "${BOLD}OPCIONES$END"
-	echo -e "\t$BOLD-d$END\tMuestra y genera un archivo con la depuración de este script."
-	echo -e "\t$BOLD-h$END\tPara mostrar las opciones de ayuda (estás en esta opción)."
-	echo -e "\t$BOLD-r$END\tTransfiere la ejecución a otra terminal mientras lo graba con ${ITALIC}ttyrec$END."
-
-	echo -e "${BOLD}AUTOR$END"
+	echo -e "${BOLD}OPTIONS$END";
+	WRAP_TEXT "Generates a .log file with the execution information. If you use Gnome it shows you this in another terminal in real time." $'\t'"${BOLD}-d$END"$'\t':$'\t'$'\t' 16;
+	# "Genera un archivo .log con con la información de la ejecución. Si usa Gnome le muestra esto en otra terminal en tiempo real."
+	WRAP_TEXT "Shows help and options of the script." $'\t'"${BOLD}-h$END"$'\t':$'\t'$'\t' 16;
+	# "Muestra ayuda y opciones del script."
+	WRAP_TEXT "Transfers the execution to another terminal while recording it using ${ITALIC}ttyrec$END. If you do not use ${ITALIC}gnome-terminal$END you will have to configure the script to work with your terminal." $'\t'"${BOLD}-r$END"$'\t':$'\t'$'\t' 16;
+	# "Transfiere la ejecución a otra terminal mientras lo graba usando ttyrec. Si no usa la terminal de Gnome tendrá que configurar el script para que funcione con su terminal."
+	echo -e "${BOLD}AUTHOR$END";
+	WRAP_TEXT "Written in its entirety by @ureli (in Github) 2018." $'\t' 8;
 }
 
 CLEAR() {
@@ -39,10 +81,10 @@ CLEAR() {
 
 EJEMPLO_DE_USO(){
 	if [[ ${USER-$(whoami)} = "root" ]]; then
-		typeset -l SIGNO="#" RUTA=${PWD//\/root/\~} COLOR=$RED
+		typeset -l SIGNO="#" RUTA=${PWD//\/root/\~} COLOR=$RED;
 	fi
 
-	echo -e "$BOLD${COLOR:-$GREEN}$USER@$HOSTNAME$END:$BOLD$BLUE${RUTA:-${PWD//\/home\/$USER/\~}}$END${SIGNO:-"$"}\x20$1\r"
+	echo -e "$BOLD${COLOR:-$GREEN}$USER@$HOSTNAME$END:$BOLD$BLUE${RUTA:-${PWD//\/home\/$USER/\~}}$END${SIGNO:-"$"}\x20$1\r";
 }
 
 GRAFICAR() {
@@ -89,7 +131,6 @@ while getopts "dhr" OPCION; do
 		d)	DEBUG=true
 			;;
 		h)
-			printf '\e[8;19;159t';
 			CLEAR;
 			SOBRE_EL_USO;
 			exit 0
@@ -155,11 +196,9 @@ if ${DEBUG:=false}; then														# Si la opción -d está activada crea arc
 	( gnome-terminal -- watch -tn .1 "tail -n20 "$D_ARCHIVO"" ) 2> /dev/null
 	set -x
 fi
-
-
-
+# Cdóigo -----------------------------------------------------------------------
 while :; do
-	M_COLS=$(tput cols);
+	M_COLS=$(tput cols 2> /dev/null);
 	[[ $M_COLS = 0 ]] && M_COLS=50 || M_COLS=$(((M_COLS -4)/3));
 
 	read -rep "$(echo -e "$CYAN${BOLD}Numero de columnas (VERTICAL):$END ")" -i $M_COLS COLUMNAS;
@@ -173,7 +212,7 @@ while :; do
 done
 
 while :; do
-	M_FILAS=$(tput lines);
+	M_FILAS=$(tput lines 2> /dev/null);
 	[[ $M_FILAS = 0 ]] && unset M_FILAS || M_FILAS=$((M_FILAS -14));
 
 	read -rep "$(echo -e "$CYAN${BOLD}Numero de filas (HORIZONTAL):$END ")" -i ${M_FILAS:-""} FILAS;
@@ -221,6 +260,9 @@ while :; do
 				echo -e "\n${GREEN}Coordinate «$BOLD$OPCION$END${GREEN}» unmarked.$END";	## String
 			fi
 		fi
+	elif [[ $OPCION =~ ^[hH]$ ]]; then
+		less -R <<< $(SOBRE_EL_USO);
+		GRAFICAR
 	elif [[ $OPCION =~ ^[qQ]|[eE][xX][iI][tT]$ ]]; then
 		CLEAR; exit 0
 	elif [[ $OPCION =~ ^[pP]$ ]]; then
