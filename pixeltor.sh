@@ -149,10 +149,7 @@ GRAFICAR() {
 	# N representa el no. de las filas
 	for (( N = 1; N <= FILAS; N++ )); do
 		printf "$BOLD$CYAN\n%3s$END" "$N";
-
-		for (( COLUMNA = 0; COLUMNA < COLUMNAS; COLUMNA++ )); do
-			printf " %b" "$(eval "printf \${ARRAY_$N[$COLUMNA]}")";
-		done
+		printf " %b" "$(eval "echo \${ARRAY_$N[*]}")";
 	done
 
 	STRING_17;
@@ -165,8 +162,6 @@ SAVE_FILE() {
 		(for (( NO_COLUMNA = 0; NO_COLUMNA < COLUMNAS; NO_COLUMNA++ )); do
 			printf "%s" "$(eval "echo -n \${ARRAY_$NO_FILA[$NO_COLUMNA]//\[\]/\\\x20\\\x20}")";
 		done) >> "$1";
-
-		echo -n '\n'  >> "$1";
 	done; echo '"' >> "$1";
 
 	if [[ ! -f "$1" ]]; then
