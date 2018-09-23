@@ -12,7 +12,7 @@ IMPREVISTO(){
 
 L_MIN() {
 	# Retorna la longitud máxima que que puede tener un string «$2» sin romper palabras con respecto a una longitud dada «$1»
-	typeset -l LT=$1 I=1;	# Longitud temporal. Es la longitud máxima que puede tener
+	typeset LT=$1 I=1;	# Longitud temporal. Es la longitud máxima que puede tener
 
 	while [[ ${2:$((LT-I)):1} != " " ]]; do
 		((I++));
@@ -26,7 +26,7 @@ L_MIN() {
 }
 
 WRAP_TEXT() { # String, prefix, lenprefix
-	typeset -l CADENA="$1" LONGITUD DELIMITADOR;
+	typeset CADENA="$1" LONGITUD DELIMITADOR;
 
 	LONGITUD=$(($(tput cols)-${3:-${#2}})) > /dev/null 2>&1 || { printf '\e[8;19;100t'; LONGITUD=$((100-${3:-${#2}})); };
 	DELIMITADOR="$2";
@@ -50,7 +50,7 @@ WRAP_TEXT() { # String, prefix, lenprefix
 			CADENA="${CADENA:1}";
 		done
 
-		echo "${DELIMITADOR%%:*}${CADENA:0:$LMIN}";
+		echo "${DELIMITADOR%%:*}$CADENA";
 	fi
 }
 
@@ -81,7 +81,7 @@ CLEAR() {
 
 EJEMPLO_DE_USO(){
 	if [[ ${USER-$(whoami)} = "root" ]]; then
-		typeset -l SIGNO="#" RUTA=${PWD//\/root/\~} COLOR=$RED;
+		typeset SIGNO="#" RUTA=${PWD//\/root/\~} COLOR=$RED;
 	fi
 
 	echo -e "$BOLD${COLOR:-$GREEN}$USER@$HOSTNAME$END:$BOLD$BLUE${RUTA:-${PWD//\/home\/$USER/\~}}$END${SIGNO:-"$"}\x20$1\r";
