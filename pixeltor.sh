@@ -162,6 +162,8 @@ SAVE_FILE() {
 		(for (( NO_COLUMNA = 0; NO_COLUMNA < COLUMNAS; NO_COLUMNA++ )); do
 			printf "%s" "$(eval "echo -n \${ARRAY_$NO_FILA[$NO_COLUMNA]//\[\]/\\\x20\\\x20}")";
 		done) >> "$1";
+
+		((NO_FILA != FILAS)) && echo -n '\n' >> "$1";
 	done; echo '"' >> "$1";
 
 	if [[ ! -f "$1" ]]; then
@@ -291,20 +293,62 @@ while :; do
 
 	read -ep "$(echo -e "$CYAN$BOLD >>>$END ")" OPCION;
 
-	if [[ $OPCION =~ ^[0-9]+[-_:.][0-9]+$ ]]; then
-		if  ! [[ ${OPCION%[-_:.]*} -gt 0 && ${OPCION%[-_:.]*} -le $COLUMNAS ]] || ! [[ ${OPCION#*[-_:.]} -gt 0 && ${OPCION#*[-_:.]} -le $FILAS ]]; then
+	if [[ "$OPCION" =~ ^[0-9*]+[-_:.][0-9*]+$ ]]; then
+		if  ! [[ "${OPCION%[-_:.]*}" = '*' || ( ${OPCION%[-_:.]*} -gt 0 && ${OPCION%[-_:.]*} -le $COLUMNAS ) ]] || \
+			! [[ "${OPCION#*[-_:.]}" = '*' || (${OPCION#*[-_:.]} -gt 0 && ${OPCION#*[-_:.]} -le $FILAS) ]]; then
 			GRAFICAR;
 			STRING_18;
 		else
-			if [[ ${OPCION//[0-9]/} =~ [:.] ]]; then
-				eval "typeset -a ARRAY_${OPCION#*[:.]}[$((${OPCION%[:.]*}-1))]=\"\e[48;5;${PICKER}m\x20\x20\e[m\"";
-				GRAFICAR;
-				STRING_9;
-			elif [[ ${OPCION//[0-9]/} =~ [-_] ]]; then
-				eval "typeset -a ARRAY_${OPCION#*[-_]}[$((${OPCION%[-_]*}-1))]=\"[]\"";
-				GRAFICAR;
-				STRING_10;
-			fi
+			case "${OPCION//[0-9]/}" in
+				*[:.]*)
+					if [[ "${OPCION//[0-9]/}" =~ ^\*.\*$ ]]; then
+						for (( N_FILA = 1; N_FILA <= FILAS; N_FILA++ )); do
+							eval "ARRAY_${N_FILA}=($(printf "%s" "$(eval "echo {01..$COLUMNAS}")"))";
+
+							for (( N_COLUMNA = 0; N_COLUMNA < COLUMNAS; N_COLUMNA++ )); do
+								eval "ARRAY_${N_FILA}[$N_COLUMNA]=\"\e[48;5;${PICKER}m\x20\x20\e[m\"";
+							done
+						done
+					elif [[ "${OPCION//[0-9]/}" =~ ^\* ]]; then
+						for ((I=0;I<$COLUMNAS;I++));do
+							eval "ARRAY_${OPCION#*[:.]}[$I]=\"\e[48;5;${PICKER}m\x20\x20\e[m\"";
+						done
+					elif [[ "${OPCION//[0-9]/}" =~ \*$ ]]; then
+						for ((I=1;I<=$FILAS;I++));do
+							eval "ARRAY_$I[$((${OPCION%[:.]*}-1))]=\"\e[48;5;${PICKER}m\x20\x20\e[m\"";
+						done
+					else
+						eval "ARRAY_${OPCION#*[:.]}[$((${OPCION%[:.]*}-1))]=\"\e[48;5;${PICKER}m\x20\x20\e[m\"";
+					fi
+
+					GRAFICAR;
+					STRING_9;
+					;;
+				*[-_]*)
+					if [[ "${OPCION//[0-9]/}" =~ ^\*.\*$ ]]; then
+						for (( N_FILA = 1; N_FILA <= FILAS; N_FILA++ )); do
+							eval "ARRAY_${N_FILA}=($(printf "%s" "$(eval "echo {01..$COLUMNAS}")"))";
+
+							for (( N_COLUMNA = 0; N_COLUMNA < COLUMNAS; N_COLUMNA++ )); do
+								eval "ARRAY_${N_FILA}[$N_COLUMNA]=\"[]\"";
+							done
+						done
+					elif [[ "${OPCION//[0-9]/}" =~ ^\* ]]; then
+						for ((I=0;I<$COLUMNAS;I++));do
+							eval "ARRAY_${OPCION#*[-_]}[$I]=\"[]\"";
+						done
+					elif [[ "${OPCION//[0-9]/}" =~ \*$ ]]; then
+						for ((I=1;I<=$FILAS;I++));do
+							eval "ARRAY_$I[$((${OPCION%[-_]*}-1))]=\"[]\"";
+						done
+					else
+						eval "ARRAY_${OPCION#*[-_]}[$((${OPCION%[-_]*}-1))]=\"[]\"";
+					fi
+
+					GRAFICAR;
+					STRING_10;
+					;;
+			esac
 		fi
 	elif [[ $OPCION =~ ^[hH]$ ]]; then
 		less -R <<< $(SOBRE_EL_USO);
