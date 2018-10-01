@@ -27,6 +27,12 @@ if [[ "$LANG" =~ "es" ]]; then
 	STRING_18(){ echo -e "\n${RED}La coordenada «$OPCION» no existe.$END"; };
 	STRING_19(){ echo -e "${RED}Sólo NÚMEROS mayores a 0 y menores que $M_COLS son aceptados.$END"; };
 	STRING_20(){ echo -e "${RED}Sólo NÚMEROS mayores a 0 son aceptados.$END"; };
+	STRING_21(){ echo -e "\nEscriba una de las opciones:\n"; };
+	STRING_22(){ echo -e "\tx,y) Marcar(:) Desmarcar(_)."; };
+	STRING_23(){ echo -e "\t h ) Ayuda."; };
+	STRING_24(){ echo -e "\t p ) Escoger color."; };
+	STRING_25(){ echo -e "\t s ) Guardar."; };
+	STRING_26(){ echo -e "\t q ) Salir.\n"; };
 else
 	STRING_1(){ echo -e "Try '$BOLD$0 -h$END' for more information." 2> /dev/null; };
 	STRING_2(){ echo -e "You need gnome-terminal for this option. You can also configure your terminal in the script."; };
@@ -48,6 +54,12 @@ else
 	STRING_18(){ echo -e "\n${RED}Coordinate «$OPCION» does not exist.$END"; };
 	STRING_19(){ echo -e "${RED}Only NUMBERS greater than 0 and less than $M_COLS are accepted.$END"; };
 	STRING_20(){ echo -e "${RED}Only NUMBERS greater than 0 are accepted.$END"; };
+	STRING_21(){ echo -e "\nType according to option:\n"; };
+	STRING_22(){ echo -e "\tx,y) Check(:) Uncheck(_)."; };
+	STRING_23(){ echo -e "\t h ) Help."; };
+	STRING_24(){ echo -e "\t p ) Pick color."; };
+	STRING_25(){ echo -e "\t s ) Save."; };
+	STRING_26(){ echo -e "\t q ) Quit.\n"; };
 fi
 
 IMPREVISTO(){
@@ -99,32 +111,51 @@ WRAP_TEXT() { # String, prefix, lenprefix
 	fi
 }
 
-SOBRE_EL_USO(){
+HOW_TO_USE() {
 	echo -e "${BOLD}SYNOPSIS$END";
 	echo -e "\t$SCRIPT [Options]";
 	echo;
 
 	echo -e "${BOLD}DESCRIPTION$END";
 	WRAP_TEXT "$BOLD$SCRIPT$END It's a simple script for those pixelart fanatics in terminals. It has no dependencies at all beyond the simple interpreter bash. Execute and let your artistic talents fly!" $'\t' 8;
-	# "Es un simple script para aquellos fanáticos del pixelart en terminales. No tiene dependencias en lo absoluto más allá del simple interprete bash. Ejecute y ¡deje volar sus dotes artísticos."
 	echo;
-	# "Para marcar una coordenada se tiene que insertar el valor de x (columna) separado por «:» seguido por la coordenada y (fila)."
-	# "Para desmarcar una coordenada se tiene que insertar el valor de x (columna) separado por «_» seguido por la coordenada y (fila)."
-	# "Para seleccionar un color sólo introduzca el número correspondiente en el gráfico, los primeros 16 (0-15) son personalizados por su terminal. También puede cancelar esta opción introduciendo «q»."
+
 	WRAP_TEXT "To mark a coordinate, insert the value of x (column) separated by «:» followed by the coordinate y (row)." $'\t' 8;
 	WRAP_TEXT "To deselect a coordinate, insert the value of x (column) separated by «_» followed by the coordinate y (row)." $'\t' 8;
+	WRAP_TEXT "To mark/unmark an axis you can use the "*" character instead of entering a number." $'\t' 8
 	echo;
 	WRAP_TEXT "To select a color just enter the corresponding number in the chart, the first 16 (0-15) are customized by your terminal. You can also cancel this option by entering «q»." $'\t' 8
 
 	echo -e "${BOLD}OPTIONS$END";
 	WRAP_TEXT "Generates a .log file with the execution information. If you use Gnome it shows you this in another terminal in real time." $'\t'"${BOLD}-d$END"$'\t':$'\t'$'\t' 16;
-	# "Genera un archivo .log con con la información de la ejecución. Si usa Gnome le muestra esto en otra terminal en tiempo real."
 	WRAP_TEXT "Shows help and options of the script." $'\t'"${BOLD}-h$END"$'\t':$'\t'$'\t' 16;
-	# "Muestra ayuda y opciones del script."
 	WRAP_TEXT "Transfers the execution to another terminal while recording it using ${ITALIC}ttyrec$END. If you do not use ${ITALIC}gnome-terminal$END you will have to configure the script to work with your terminal." $'\t'"${BOLD}-r$END"$'\t':$'\t'$'\t' 16;
-	# "Transfiere la ejecución a otra terminal mientras lo graba usando ttyrec. Si no usa la terminal de Gnome tendrá que configurar el script para que funcione con su terminal."
 	echo -e "${BOLD}AUTHOR$END";
 	WRAP_TEXT "Written in its entirety by @ureli (in Github) 2018." $'\t' 8;
+}
+
+
+SOBRE_EL_USO(){
+	echo -e "${BOLD}SINOPSIS$END";
+	echo -e "\t$SCRIPT [Opciones]";
+	echo;
+
+	echo -e "${BOLD}DESCRIPCIÓN$END";
+	WRAP_TEXT "$BOLD$SCRIPT$END Es un simple script para aquellos fanáticos del pixelart en terminales. No tiene dependencias en lo absoluto más allá del simple interprete bash. Ejecute y ¡deje volar su imaginación." $'\t' 8;
+	echo;
+
+	WRAP_TEXT "Para marcar una coordenada se tiene que insertar el valor de x (columna) separado por «:» seguido por la coordenada y (fila)." $'\t' 8;
+	WRAP_TEXT "Para desmarcar una coordenada se tiene que insertar el valor de x (columna) separado por «_» seguido por la coordenada y (fila)." $'\t' 8;
+	WRAP_TEXT "Para marcar/desmarcar un eje puede usar el carácter «*» en vez de introducir un número." $'\t' 8;
+	echo;
+	WRAP_TEXT "Para seleccionar un color sólo introduzca el número correspondiente en el gráfico, los primeros 16 (0-15) son personalizados por su terminal. También puede cancelar esta opción introduciendo «q»." $'\t' 8
+
+	echo -e "${BOLD}OPCIONES$END";
+	WRAP_TEXT "Genera un archivo .log con con la información de la ejecución. Si usa Gnome le muestra esto en otra terminal en tiempo real." $'\t'"${BOLD}-d$END"$'\t':$'\t'$'\t' 16;
+	WRAP_TEXT "Muestra ayuda y opciones del script." $'\t'"${BOLD}-h$END"$'\t':$'\t'$'\t' 16;
+	WRAP_TEXT "Transfiere la ejecución a otra terminal mientras lo graba usando ${ITALIC}ttyrec$END. Si no usa la terminal de Gnome tendrá que configurar el script para que funcione con su terminal." $'\t'"${BOLD}-r$END"$'\t':$'\t'$'\t' 16;
+	echo -e "${BOLD}AUTOR$END";
+	WRAP_TEXT "Escrito en su totalidad por @ureli (en Github) 2018." $'\t' 8;
 }
 
 CLEAR() {
@@ -181,7 +212,13 @@ while getopts "dhr" OPCION; do
 			;;
 		h)
 			CLEAR;
-			SOBRE_EL_USO;
+
+			if [[ "$LANG" =~ "es" ]]; then
+				SOBRE_EL_USO;
+			else
+				HOW_TO_USE;
+			fi
+
 			exit 0
 			;;
 		r)	RECORD=true
@@ -246,7 +283,7 @@ fi
 which tput > /dev/null 2>&1 && M_COLS=$((($(tput cols)-4)/3));
 
 while :; do
-	[[ -z $M_COLS ]] && { M_COLS=32; printf '\e[8;50;100t\r'; }
+	[[ -z $M_COLS || $M_COLS -le 0 ]] && M_COLS=32;
 
 	read -rep "$(echo -e "$CYAN${BOLD}Numero de columnas (VERTICAL):$END ")" -i $M_COLS COLUMNAS;
 
@@ -262,6 +299,7 @@ done
 
 while :; do
 	which tput > /dev/null 2>&1 && M_FILAS=$(($(tput lines) -15))
+	[[ $M_FILAS -le 0 ]] && unset M_FILAS;
 
 	read -rep "$(echo -e "$CYAN${BOLD}Numero de filas (HORIZONTAL):$END ")" -i ${M_FILAS:-""} FILAS;
 
@@ -281,15 +319,15 @@ for (( N_FILA = 1; N_FILA <= FILAS; N_FILA++ )); do
 	done
 done
 
-GRAFICAR;
+printf '\e[8;%s;%st' $((FILAS+15)) $(((COLUMNAS*3)+4)); GRAFICAR;
 
 while :; do
-	echo -e "\nType according to option:\n";
-	echo -e "\tx,y) Check(:) Uncheck(_).";
-	echo -e "\t H ) Help.";
-	echo -e "\t P ) Pick color.";
-	echo -e "\t S ) Save.";
-	echo -e "\t Q ) Quit.\n";
+	STRING_21;
+	STRING_22;
+	STRING_23;
+	STRING_24;
+	STRING_25;
+	STRING_26;
 
 	read -ep "$(echo -e "$CYAN$BOLD >>>$END ")" OPCION;
 
@@ -356,7 +394,7 @@ while :; do
 	elif [[ $OPCION =~ ^[qQ]|[eE][xX][iI][tT]$ ]]; then
 		CLEAR; exit 0
 	elif [[ $OPCION =~ ^[pP]$ ]]; then
-		printf '\e[8;18;145t';	# Se asegura que la terminal tenga cierto tamaño.
+		printf '\e[8;%s;145t' "$((FILAS+15))";	# Se asegura que la terminal tenga cierto tamaño.
 		CLEAR; echo;
 
 		for COLOR_LOCAL in {0..15}; do
