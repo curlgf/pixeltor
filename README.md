@@ -19,5 +19,5 @@ Here are a few examples of how you can let your imagination run wild:
 If you like my work and would like to help me some satoshis or dogecoins would
 be from a lot of help.
 
-*1HmtMJhVF6NJ9J9cYD9YPtqKkiHrUzc35J*
+*1HmtMJhVF6NJ9J9cYD9YPtqKkiHrUzc35J*</br>
 *DTiDffEacUyPUDUL4zJdYtAWL7Xfr6CNbB*

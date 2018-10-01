@@ -19,5 +19,5 @@ Aquí unos ejemplos de como puede dar rienda a la imaginación:
 Si le agrada mi trabajo y quisiera ayudarme unos satoshis o dogecoins serian de
 mucha ayuda.
 
-*1HmtMJhVF6NJ9J9cYD9YPtqKkiHrUzc35J*
+*1HmtMJhVF6NJ9J9cYD9YPtqKkiHrUzc35J*</br>
 *DTiDffEacUyPUDUL4zJdYtAWL7Xfr6CNbB*
